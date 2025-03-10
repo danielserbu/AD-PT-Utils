@@ -294,3 +294,28 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - CyberWarfare Labs for the CRTS certification
 - SecOps Group for the C-ADPenX certification
 - Creators of tools like Impacket, NetExec, Mimikatz, and SharpView
+
+
+# Simple usage against a single target
+python3 ad-autorecon.py -t 192.168.1.100
+
+# Scan a subnet
+python3 ad-autorecon.py -t 192.168.1.0/24
+
+# Use a file with multiple targets
+python3 ad-autorecon.py -tL targets.txt
+
+# Quick scan with fewer checks
+python3 ad-autorecon.py -t 192.168.1.100 -q
+
+# Skip certain phases
+python3 ad-autorecon.py -t 192.168.1.100 --skip-bloodhound --skip-powershell
+
+# Multi-threaded scan with custom thread count
+python3 ad-autorecon.py -tL targets.txt --threads 15
+
+# Generate a report after scanning
+python3 ad-autorecon.py -t 192.168.1.100 --report
+
+# Only generate a report from previous scans
+python3 ad-autorecon.py --report-only
