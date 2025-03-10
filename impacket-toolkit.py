@@ -69,6 +69,9 @@ class ImpacketToolkit:
         
         self.start_time = None
         self.end_time = None
+
+         # Verify that required tools are available
+        self.verify_impacket_tools()
         
     def verify_impacket_tools(self) -> bool:
         """Verify that all required Impacket tools are available"""

@@ -1,0 +1,96 @@
+flowchart TD
+    subgraph "AD Pentest Toolkit"
+        Config["config.py\n(Shared Configuration)"]
+        Workflow["ad-pentest-workflow.py\n(Orchestrator)"]
+        
+        subgraph "Core Components"
+            NetexecEnum["netexec-enumerator.py\n(SMB/User Enumeration)"]
+            Kerberoast["kerberoast.py\n(Kerberoasting)"]
+            Impacket["impacket-toolkit.py\n(Credential Access)"]
+            PSEnum["powershell-enumeration.py\n(AD Reconnaissance)"]
+            SharpView["sharpview-automator.py\n(AD Object Enumeration)"]
+            Mimikatz["mimikatz-wrapper.py\n(Credential Harvesting)"]
+            ADToolkit["adpentest-toolkit.py\n(Main Interface)"]
+        end
+        
+        subgraph "Environment"
+            CheckEnv["check-environment.py\n(Dependency Verification)"]
+        end
+        
+        subgraph "Results"
+            Results["results/\n(Output Directory)"]
+            Logs["logs/\n(Log Directory)"]
+        end
+    end
+    
+    Config --> NetexecEnum
+    Config --> Kerberoast
+    Config --> Impacket
+    Config --> PSEnum
+    Config --> SharpView
+    Config --> Mimikatz
+    Config --> ADToolkit
+    Config --> Workflow
+    
+    Workflow --> NetexecEnum
+    Workflow --> Kerberoast
+    Workflow --> Impacket
+    Workflow --> PSEnum
+    Workflow --> SharpView
+    Workflow --> Mimikatz
+    Workflow --> ADToolkit
+    
+    NetexecEnum --> Results
+    Kerberoast --> Results
+    Impacket --> Results
+    PSEnum --> Results
+    SharpView --> Results
+    Mimikatz --> Results
+    ADToolkit --> Results
+    Workflow --> Results
+    
+    NetexecEnum --> Logs
+    Kerberoast --> Logs
+    Impacket --> Logs
+    PSEnum --> Logs
+    SharpView --> Logs
+    Mimikatz --> Logs
+    ADToolkit --> Logs
+    Workflow --> Logs
+    
+    CheckEnv --> Config
+    CheckEnv -.-> NetexecEnum
+    CheckEnv -.-> Kerberoast
+    CheckEnv -.-> Impacket
+    CheckEnv -.-> PSEnum
+    CheckEnv -.-> SharpView
+    CheckEnv -.-> Mimikatz
+    
+    subgraph "External Tools"
+        NetExec["NetExec/CrackMapExec"]
+        ImpacketSuite["Impacket Suite"]
+        MimikatzExe["Mimikatz"]
+        PowerShell["PowerShell"]
+        SharpViewExe["SharpView"]
+        BloodHound["BloodHound"]
+        Hashcat["Hashcat/John"]
+    end
+    
+    NetexecEnum --> NetExec
+    Kerberoast --> ImpacketSuite
+    Kerberoast --> Hashcat
+    Impacket --> ImpacketSuite
+    PSEnum --> PowerShell
+    SharpView --> SharpViewExe
+    Mimikatz --> MimikatzExe
+    ADToolkit --> BloodHound
+    
+    subgraph "Certifications"
+        PNPT["Practical Network Penetration Tester\n(PNPT)"]
+        CRTS["Certified Red Team Specialist\n(CRTS)"]
+        CADPENX["Certified AD Pentesting Expert\n(C-ADPenX)"]
+    end
+    
+    Workflow -.-> PNPT
+    Workflow -.-> CRTS
+    Workflow -.-> CADPENX
