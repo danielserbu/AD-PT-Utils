@@ -70,6 +70,42 @@ class ImpacketToolkit:
         self.start_time = None
         self.end_time = None
         
+    def verify_impacket_tools(self) -> bool:
+        """Verify that all required Impacket tools are available"""
+        required_tools = [
+            "secretsdump.py",
+            "smbclient.py",
+            "psexec.py",
+            "wmiexec.py",
+            "GetNPUsers.py"
+        ]
+        
+        Logger.section("Verifying Impacket Tools")
+        all_tools_available = True
+        
+        for tool in required_tools:
+            try:
+                result = subprocess.run(f"which {tool}", shell=True, capture_output=True, text=True)
+                if result.returncode == 0:
+                    Logger.success(f"{tool} found at: {result.stdout.strip()}")
+                else:
+                    # Try with python -m
+                    result = subprocess.run(f"python -m impacket.examples.{tool.replace('.py', '')}", 
+                                        shell=True, capture_output=True, text=True)
+                    if "usage" in result.stdout or "usage" in result.stderr:
+                        Logger.success(f"{tool} available via Python module")
+                    else:
+                        Logger.error(f"{tool} not found")
+                        all_tools_available = False
+            except Exception as e:
+                Logger.error(f"Error checking for {tool}: {str(e)}")
+                all_tools_available = False
+        
+        if not all_tools_available:
+            Logger.warning("Some Impacket tools are missing. Functionality will be limited.")
+        
+        return all_tools_available
+        
     def execute_command(self, command: str, description: str) -> str:
         """Execute a shell command and return its output"""
         try:

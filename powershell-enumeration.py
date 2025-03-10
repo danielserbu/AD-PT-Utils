@@ -82,7 +82,9 @@ class PSScripts:
     @staticmethod
     def create_enum_script_directory() -> Path:
         """Create scripts directory if it doesn't exist"""
-        script_dir = Path("scripts/enumeration")
+        # Use absolute path relative to the current script
+        base_dir = Path(__file__).parent.absolute()
+        script_dir = base_dir / "scripts" / "enumeration"
         script_dir.mkdir(parents=True, exist_ok=True)
         return script_dir
         
@@ -943,7 +945,9 @@ Write-Output "AD enumeration complete. All results saved to $outputDir"
 
 class PowerShellEnumeration:
     def __init__(self):
-        self.results_dir = Path(RESULTS_DIRECTORY) / "ad_enumeration"
+        # Use absolute path for results directory
+        base_dir = Path(__file__).parent.absolute()
+        self.results_dir = base_dir / RESULTS_DIRECTORY / "ad_enumeration"
         self.results_dir.mkdir(parents=True, exist_ok=True)
         self.ps_scripts_dir = PSScripts.create_enum_script_directory()
         self.start_time = None

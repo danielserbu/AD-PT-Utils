@@ -81,38 +81,78 @@ class MimikatzWrapper:
         
     def _find_mimikatz(self) -> Optional[Path]:
         """Find mimikatz binary in common locations"""
+        # Common locations to search for mimikatz
+        script_dir = Path(__file__).parent.absolute()
         mimikatz_locations = [
+            script_dir / "mimikatz.exe",
+            script_dir / "mimikatz" / "mimikatz.exe",
+            script_dir / "tools" / "mimikatz.exe",
+            script_dir.parent / "mimikatz" / "mimikatz.exe",
+            script_dir.parent / "tools" / "mimikatz.exe",
             "mimikatz.exe",
             "mimikatz/mimikatz.exe",
             "tools/mimikatz.exe",
             "../mimikatz/mimikatz.exe",
-            "../tools/mimikatz.exe"
+            "../tools/mimikatz.exe",
+            # Add Windows search paths
+            Path("C:/") / "tools" / "mimikatz.exe",
+            Path(os.environ.get('USERPROFILE', '')) / "tools" / "mimikatz.exe"
         ]
         
+        # Check if the tool is in PATH
+        try:
+            result = subprocess.run("where mimikatz.exe 2>nul", shell=True, capture_output=True, text=True)
+            if result.returncode == 0:
+                path = Path(result.stdout.strip())
+                Logger.success(f"Found mimikatz in PATH at: {path}")
+                return path
+        except Exception:
+            pass
+        
+        # Check in common locations
         for location in mimikatz_locations:
-            path = Path(location)
-            if path.exists():
-                Logger.success(f"Found mimikatz at: {path.absolute()}")
-                return path.absolute()
+            if location.exists():
+                Logger.success(f"Found mimikatz at: {location.absolute()}")
+                return location.absolute()
         
         Logger.warning("Mimikatz binary not found. Some local functions may not work.")
         return None
     
     def _find_keko(self) -> Optional[Path]:
-        """Find keko binary in common locations"""
-        keko_locations = [
+        """Find kekeo binary in common locations"""
+        # Common locations to search for kekeo
+        script_dir = Path(__file__).parent.absolute()
+        kekeo_locations = [
+            script_dir / "kekeo.exe",
+            script_dir / "kekeo" / "kekeo.exe",
+            script_dir / "tools" / "kekeo.exe",
+            script_dir.parent / "kekeo" / "kekeo.exe",
+            script_dir.parent / "tools" / "kekeo.exe",
             "kekeo.exe",
             "kekeo/kekeo.exe",
             "tools/kekeo.exe",
             "../kekeo/kekeo.exe",
-            "../tools/kekeo.exe"
+            "../tools/kekeo.exe",
+            # Add Windows search paths
+            Path("C:/") / "tools" / "kekeo.exe",
+            Path(os.environ.get('USERPROFILE', '')) / "tools" / "kekeo.exe"
         ]
         
-        for location in keko_locations:
-            path = Path(location)
-            if path.exists():
-                Logger.success(f"Found kekeo at: {path.absolute()}")
-                return path.absolute()
+        # Check if the tool is in PATH
+        try:
+            result = subprocess.run("where kekeo.exe 2>nul", shell=True, capture_output=True, text=True)
+            if result.returncode == 0:
+                path = Path(result.stdout.strip())
+                Logger.success(f"Found kekeo in PATH at: {path}")
+                return path
+        except Exception:
+            pass
+        
+        # Check in common locations
+        for location in kekeo_locations:
+            if location.exists():
+                Logger.success(f"Found kekeo at: {location.absolute()}")
+                return location.absolute()
         
         Logger.warning("Kekeo binary not found. Some ticket-related functions may not work.")
         return None
