@@ -267,35 +267,6 @@ Below is an example of a full AD penetration testing workflow using this toolkit
 ./impacket-toolkit.py psexec -t 192.168.1.101
 ```
 
-## Security Considerations
-
-- Use this toolkit only in environments where you have explicit permission to perform security testing
-- Store the toolkit on an encrypted drive when not in use
-- Be aware that some tools (especially Mimikatz) may trigger antivirus alerts
-- Use stealth options where available to minimize detection
-
-## Contributing
-
-Contributions to this toolkit are welcome! If you'd like to add a new feature or improve an existing one:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- TCM Security for the PNPT certification
-- CyberWarfare Labs for the CRTS certification
-- SecOps Group for the C-ADPenX certification
-- Creators of tools like Impacket, NetExec, Mimikatz, and SharpView
-
-
 # Simple usage against a single target
 python3 ad-autorecon.py -t 192.168.1.100
 
@@ -319,3 +290,12 @@ python3 ad-autorecon.py -t 192.168.1.100 --report
 
 # Only generate a report from previous scans
 python3 ad-autorecon.py --report-only
+
+
+PowerShell Helper Options
+The PowerShell script provides several useful options:
+
+Verify your environment: .\Run-BloodHoundAnalyzer.ps1 -VerifyEnvironment
+Install dependencies: .\Run-BloodHoundAnalyzer.ps1 -InstallDependencies
+Set custom Neo4j details: .\Run-BloodHoundAnalyzer.ps1 -Neo4jUri "bolt://localhost:7687" -Neo4jUser "neo4j" -Neo4jPassword "MyPassword"
+Specify output location: .\Run-BloodHoundAnalyzer.ps1 -OutputDir "C:\path\to\reports"
