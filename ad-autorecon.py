@@ -983,7 +983,7 @@ class ADAutoRecon:
             computer_name = sam_match.group(1).strip()
             
             # Remove $ from computer name if present
-            if computer_name.endswith('):
+            if computer_name.endswith('$'):
                 computer_name = computer_name[:-1]
                 
             # Get distinguished name
