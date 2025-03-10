@@ -8,52 +8,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
+from utils import Colors, Logger, execute_command, save_results
+
 # Import the shared config and logger
 try:
     from config import DOMAIN_USERS, DOMAIN_PASSWORDS, NTLM_HASHES, TARGETS
 except ImportError:
     print("Error: config.py not found. Please create it with the required variables.")
     sys.exit(1)
-
-class Colors:
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-class Logger:
-    @staticmethod
-    def section(text: str):
-        print(f"\n{Colors.BOLD}{Colors.BLUE}{'=' * 50}{Colors.ENDC}")
-        print(f"{Colors.BOLD}{Colors.BLUE}{text.center(50)}{Colors.ENDC}")
-        print(f"{Colors.BOLD}{Colors.BLUE}{'=' * 50}{Colors.ENDC}\n")
-
-    @staticmethod
-    def subsection(text: str):
-        print(f"\n{Colors.YELLOW}{'-' * 40}{Colors.ENDC}")
-        print(f"{Colors.YELLOW}{text}{Colors.ENDC}")
-        print(f"{Colors.YELLOW}{'-' * 40}{Colors.ENDC}\n")
-
-    @staticmethod
-    def command(cmd: str):
-        print(f"{Colors.CYAN}[+] Executing: {cmd}{Colors.ENDC}\n")
-
-    @staticmethod
-    def success(text: str):
-        print(f"{Colors.GREEN}[+] {text}{Colors.ENDC}")
-
-    @staticmethod
-    def error(text: str):
-        print(f"{Colors.RED}[-] {text}{Colors.ENDC}")
-
-    @staticmethod
-    def info(text: str):
-        print(f"{Colors.BLUE}[*] {text}{Colors.ENDC}")
 
 class KerberoastAutomation:
     def __init__(self):

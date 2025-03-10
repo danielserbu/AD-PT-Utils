@@ -10,6 +10,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple, Set
 
+from utils import Colors, Logger, execute_command, save_results
+
 # Import shared configuration
 try:
     from config import (
@@ -19,50 +21,6 @@ try:
 except ImportError:
     print("Error: config.py not found. Please ensure it exists in the current directory.")
     sys.exit(1)
-
-class Colors:
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-class Logger:
-    @staticmethod
-    def section(text: str):
-        print(f"\n{Colors.BOLD}{Colors.BLUE}{'=' * 50}{Colors.ENDC}")
-        print(f"{Colors.BOLD}{Colors.BLUE}{text.center(50)}{Colors.ENDC}")
-        print(f"{Colors.BOLD}{Colors.BLUE}{'=' * 50}{Colors.ENDC}\n")
-
-    @staticmethod
-    def subsection(text: str):
-        print(f"\n{Colors.YELLOW}{'-' * 40}{Colors.ENDC}")
-        print(f"{Colors.YELLOW}{text}{Colors.ENDC}")
-        print(f"{Colors.YELLOW}{'-' * 40}{Colors.ENDC}\n")
-
-    @staticmethod
-    def command(cmd: str):
-        print(f"{Colors.CYAN}[+] Executing: {cmd}{Colors.ENDC}\n")
-
-    @staticmethod
-    def success(text: str):
-        print(f"{Colors.GREEN}[+] {text}{Colors.ENDC}")
-
-    @staticmethod
-    def error(text: str):
-        print(f"{Colors.RED}[-] {text}{Colors.ENDC}")
-
-    @staticmethod
-    def info(text: str):
-        print(f"{Colors.BLUE}[*] {text}{Colors.ENDC}")
-
-    @staticmethod
-    def warning(text: str):
-        print(f"{Colors.YELLOW}[!] {text}{Colors.ENDC}")
 
 class SharpViewWrapper:
     """Wrapper for SharpView tool to automate AD enumeration tasks"""
@@ -383,6 +341,240 @@ Write-Output "--- RESULTS_JSON_END ---"
         except json.JSONDecodeError:
             Logger.warning("Could not parse output as JSON")
             return {"raw_output": output, "output_file": str(output_file)}
+
+    def run_full_enumeration(self, target: str = None, username: str = None, password: str = None) -> Dict[str, Any]:
+        """Run a full enumeration using all available functions"""
+        self.start_time = datetime.now()
+        
+        Logger.section("Starting Full AD Enumeration with SharpView")
+        Logger.info(f"Start Time: {self.start_time}")
+        
+        if target:
+            Logger.info(f"Target: {target}")
+            Logger.info(f"Username: {username}")
+        else:
+            Logger.info("Running locally on current machine")
+        
+        # Initialize results dictionary
+        all_results = {
+            "start_time": str(self.start_time),
+            "target": target or "local",
+            "username": username,
+            "domain_info": None,
+            "domain_trusts": None,
+            "domain_users": None,
+            "admin_users": None,
+            "domain_groups": None,
+            "admin_groups": None,
+            "domain_computers": None,
+            "domain_servers": None,
+            "domain_admin_members": None,
+            "enterprise_admin_members": None,
+            "gpo": None,
+            "domain_ous": None,
+            "local_admin_access": None,
+            "domain_shares": None,
+            "interesting_acls": None
+        }
+        
+        # Run each enumeration function and store results
+        try:
+            Logger.info("Enumerating domain information...")
+            all_results["domain_info"] = self.enum_domain_info(target, username, password)
+            
+            Logger.info("Enumerating domain trusts...")
+            all_results["domain_trusts"] = self.enum_domain_trusts(target, username, password)
+            
+            Logger.info("Enumerating domain users...")
+            all_results["domain_users"] = self.enum_domain_users(target, username, password)
+            
+            Logger.info("Enumerating admin users...")
+            all_results["admin_users"] = self.enum_domain_users(target, username, password, admin_only=True)
+            
+            Logger.info("Enumerating domain groups...")
+            all_results["domain_groups"] = self.enum_domain_groups(target, username, password)
+            
+            Logger.info("Enumerating admin groups...")
+            all_results["admin_groups"] = self.enum_domain_groups(target, username, password, admin_only=True)
+            
+            Logger.info("Enumerating domain computers...")
+            all_results["domain_computers"] = self.enum_domain_computers(target, username, password)
+            
+            Logger.info("Enumerating domain servers...")
+            all_results["domain_servers"] = self.enum_domain_computers(target, username, password, servers_only=True)
+            
+            Logger.info("Enumerating Domain Admins group members...")
+            all_results["domain_admin_members"] = self.enum_group_members("Domain Admins", target, username, password)
+            
+            Logger.info("Enumerating Enterprise Admins group members...")
+            all_results["enterprise_admin_members"] = self.enum_group_members("Enterprise Admins", target, username, password)
+            
+            Logger.info("Enumerating Group Policy Objects...")
+            all_results["gpo"] = self.enum_gpo(target, username, password)
+            
+            Logger.info("Enumerating Domain Organizational Units...")
+            all_results["domain_ous"] = self.get_domain_ou(target, username, password)
+            
+            # The following functions may take longer and potentially trigger alerts
+            Logger.warning("The following enumeration functions may be more 'noisy' and could trigger alerts...")
+            
+            Logger.info("Finding local admin access...")
+            all_results["local_admin_access"] = self.find_local_admin_access(target, username, password)
+            
+            Logger.info("Finding domain shares...")
+            all_results["domain_shares"] = self.find_domain_shares(target, username, password)
+            
+            Logger.info("Finding interesting domain ACLs...")
+            all_results["interesting_acls"] = self.find_interesting_domain_acl(target, username, password)
+            
+        except KeyboardInterrupt:
+            Logger.warning("Enumeration interrupted by user. Saving partial results...")
+        except Exception as e:
+            Logger.error(f"Error during enumeration: {str(e)}")
+        
+        # Complete the operation
+        self.end_time = datetime.now()
+        duration = self.end_time - self.start_time
+        
+        all_results["end_time"] = str(self.end_time)
+        all_results["duration"] = str(duration)
+        
+        Logger.section("AD Enumeration Complete")
+        Logger.info(f"Start Time: {self.start_time}")
+        Logger.info(f"End Time: {self.end_time}")
+        Logger.info(f"Duration: {duration}")
+        
+        # Save overall results
+        summary_file = self.results_dir / f"sharpview_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(summary_file, 'w') as f:
+            json.dump(all_results, f, indent=4)
+        
+        Logger.success(f"Summary saved to {summary_file}")
+        
+        return all_results
+
+def main():
+    parser = argparse.ArgumentParser(description=f'{Colors.BOLD}SharpView Automation Tool{Colors.ENDC}')
+    
+    # Main command subparsers
+    subparsers = parser.add_subparsers(dest='command', help='Command to execute')
+    
+    # Full enumeration command
+    full_parser = subparsers.add_parser('full', help='Run full AD enumeration')
+    full_parser.add_argument('-t', '--target', help='Target IP address or hostname for remote execution')
+    full_parser.add_argument('-u', '--username', help='Username for remote execution')
+    full_parser.add_argument('-p', '--password', help='Password for remote execution')
+    
+    # Domain info command
+    domain_parser = subparsers.add_parser('domain', help='Enumerate basic domain information')
+    domain_parser.add_argument('-t', '--target', help='Target IP address or hostname for remote execution')
+    domain_parser.add_argument('-u', '--username', help='Username for remote execution')
+    domain_parser.add_argument('-p', '--password', help='Password for remote execution')
+    
+    # Domain trusts command
+    trusts_parser = subparsers.add_parser('trusts', help='Enumerate domain trusts')
+    trusts_parser.add_argument('-t', '--target', help='Target IP address or hostname for remote execution')
+    trusts_parser.add_argument('-u', '--username', help='Username for remote execution')
+    trusts_parser.add_argument('-p', '--password', help='Password for remote execution')
+    
+    # Users command
+    users_parser = subparsers.add_parser('users', help='Enumerate domain users')
+    users_parser.add_argument('-t', '--target', help='Target IP address or hostname for remote execution')
+    users_parser.add_argument('-u', '--username', help='Username for remote execution')
+    users_parser.add_argument('-p', '--password', help='Password for remote execution')
+    users_parser.add_argument('-a', '--admin-only', action='store_true', help='Enumerate admin users only')
+    
+    # Groups command
+    groups_parser = subparsers.add_parser('groups', help='Enumerate domain groups')
+    groups_parser.add_argument('-t', '--target', help='Target IP address or hostname for remote execution')
+    groups_parser.add_argument('-u', '--username', help='Username for remote execution')
+    groups_parser.add_argument('-p', '--password', help='Password for remote execution')
+    groups_parser.add_argument('-a', '--admin-only', action='store_true', help='Enumerate admin groups only')
+    
+    # Group members command
+    group_members_parser = subparsers.add_parser('group-members', help='Enumerate members of a specific group')
+    group_members_parser.add_argument('-g', '--group-name', required=True, help='Group name to enumerate')
+    group_members_parser.add_argument('-t', '--target', help='Target IP address or hostname for remote execution')
+    group_members_parser.add_argument('-u', '--username', help='Username for remote execution')
+    group_members_parser.add_argument('-p', '--password', help='Password for remote execution')
+    
+    # Computers command
+    computers_parser = subparsers.add_parser('computers', help='Enumerate domain computers')
+    computers_parser.add_argument('-t', '--target', help='Target IP address or hostname for remote execution')
+    computers_parser.add_argument('-u', '--username', help='Username for remote execution')
+    computers_parser.add_argument('-p', '--password', help='Password for remote execution')
+    computers_parser.add_argument('-s', '--servers-only', action='store_true', help='Enumerate servers only')
+    
+    # GPO command
+    gpo_parser = subparsers.add_parser('gpo', help='Enumerate Group Policy Objects')
+    gpo_parser.add_argument('-t', '--target', help='Target IP address or hostname for remote execution')
+    gpo_parser.add_argument('-u', '--username', help='Username for remote execution')
+    gpo_parser.add_argument('-p', '--password', help='Password for remote execution')
+    
+    # OU command
+    ou_parser = subparsers.add_parser('ou', help='Enumerate Organizational Units')
+    ou_parser.add_argument('-t', '--target', help='Target IP address or hostname for remote execution')
+    ou_parser.add_argument('-u', '--username', help='Username for remote execution')
+    ou_parser.add_argument('-p', '--password', help='Password for remote execution')
+    
+    # Local admin access command
+    admin_access_parser = subparsers.add_parser('admin-access', help='Find local admin access')
+    admin_access_parser.add_argument('-t', '--target', help='Target IP address or hostname for remote execution')
+    admin_access_parser.add_argument('-u', '--username', help='Username for remote execution')
+    admin_access_parser.add_argument('-p', '--password', help='Password for remote execution')
+    
+    # Domain shares command
+    shares_parser = subparsers.add_parser('shares', help='Find domain shares')
+    shares_parser.add_argument('-t', '--target', help='Target IP address or hostname for remote execution')
+    shares_parser.add_argument('-u', '--username', help='Username for remote execution')
+    shares_parser.add_argument('-p', '--password', help='Password for remote execution')
+    
+    # ACL command
+    acl_parser = subparsers.add_parser('acl', help='Find interesting domain ACLs')
+    acl_parser.add_argument('-t', '--target', help='Target IP address or hostname for remote execution')
+    acl_parser.add_argument('-u', '--username', help='Username for remote execution')
+    acl_parser.add_argument('-p', '--password', help='Password for remote execution')
+    
+    args = parser.parse_args()
+    
+    wrapper = SharpViewWrapper()
+    
+    # Check credentials for remote execution
+    if args.target and (not args.username or not args.password):
+        Logger.error("For remote execution, username and password are required")
+        return
+    
+    # Handle commands
+    if args.command == 'full':
+        wrapper.run_full_enumeration(args.target, args.username, args.password)
+    elif args.command == 'domain':
+        wrapper.enum_domain_info(args.target, args.username, args.password)
+    elif args.command == 'trusts':
+        wrapper.enum_domain_trusts(args.target, args.username, args.password)
+    elif args.command == 'users':
+        wrapper.enum_domain_users(args.target, args.username, args.password, args.admin_only)
+    elif args.command == 'groups':
+        wrapper.enum_domain_groups(args.target, args.username, args.password, args.admin_only)
+    elif args.command == 'group-members':
+        wrapper.enum_group_members(args.group_name, args.target, args.username, args.password)
+    elif args.command == 'computers':
+        wrapper.enum_domain_computers(args.target, args.username, args.password, args.servers_only)
+    elif args.command == 'gpo':
+        wrapper.enum_gpo(args.target, args.username, args.password)
+    elif args.command == 'ou':
+        wrapper.get_domain_ou(args.target, args.username, args.password)
+    elif args.command == 'admin-access':
+        wrapper.find_local_admin_access(args.target, args.username, args.password)
+    elif args.command == 'shares':
+        wrapper.find_domain_shares(args.target, args.username, args.password)
+    elif args.command == 'acl':
+        wrapper.find_interesting_domain_acl(args.target, args.username, args.password)
+    else:
+        parser.print_help()
+
+if __name__ == "__main__":
+    import re
+    main()": output, "output_file": str(output_file)}
     
     def run_full_enumeration(self, target: str = None, username: str = None, password: str = None) -> Dict[str, Any]:
         """Run a full enumeration using all available functions"""
