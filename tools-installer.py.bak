@@ -85,16 +85,6 @@ class ToolInstaller:
         self.tmp_dir.mkdir(exist_ok=True)
         self.logs_dir.mkdir(exist_ok=True)
         self.results_dir.mkdir(exist_ok=True)
-        # Create wrappers directories for organized batch files
-        self.wrappers_dir = self.base_dir / "wrappers"
-        self.wrappers_dir.mkdir(exist_ok=True)
-        (self.wrappers_dir / "impacket").mkdir(exist_ok=True)
-        (self.wrappers_dir / "bloodhound").mkdir(exist_ok=True)
-        (self.wrappers_dir / "mimikatz").mkdir(exist_ok=True)
-        (self.wrappers_dir / "utilities").mkdir(exist_ok=True)
-        self.bin_dir = self.base_dir / "bin"
-        self.bin_dir.mkdir(exist_ok=True)
-
         
         # Set up additional subdirectories
         (self.results_dir / "kerberoast").mkdir(exist_ok=True)
@@ -474,8 +464,8 @@ class ToolInstaller:
                 
                 # Create a script to run bloodhound-python
                 if self.is_windows:
-                    batch_file = self.wrappers_dir / "bloodhound" / "bloodhound-python.bat"
-                with open(batch_file, \'w\') as f:
+                    batch_file = self.base_dir / "bloodhound-python.bat"
+                    with open(batch_file, 'w') as f:
                         f.write(f"@echo off\n{self.python_command} {bloodhound_py_dir / 'bloodhound.py'} %*")
                     Logger.success("Created batch file for bloodhound-python")
                 else:
@@ -645,14 +635,14 @@ if __name__ == "__main__":
                 
                 # Create a batch file/symlink for easy access
                 if self.is_windows:
-                    batch_file = self.wrappers_dir / "utilities" / "netexec.bat"
-            with open(batch_file, \'w\') as f:
+                    batch_file = self.base_dir / "netexec.bat"
+                    with open(batch_file, 'w') as f:
                         f.write(f"@echo off\nnetexec %*")
                     Logger.success(f"Created batch file for NetExec: {batch_file}")
                     
                     # Create alias for CrackMapExec
-                    batch_file_cme = self.wrappers_dir / "utilities" / "crackmapexec.bat"
-            with open(batch_file_cme, \'w\') as f:
+                    batch_file_cme = self.base_dir / "crackmapexec.bat"
+                    with open(batch_file_cme, 'w') as f:
                         f.write(f"@echo off\nnetexec %*")
                     Logger.success(f"Created batch file for CrackMapExec alias: {batch_file_cme}")
                 else:
@@ -699,12 +689,12 @@ Note: After installation, make sure 'netexec' is in your PATH or create a batch 
         Logger.info(f"Created NetExec installation instructions at {info_file}")
         
         # Create batch files that display an informative message
-        batch_file = self.wrappers_dir / "utilities" / "netexec.bat"
-            with open(batch_file, \'w\') as f:
+        batch_file = self.base_dir / "netexec.bat"
+        with open(batch_file, 'w') as f:
             f.write(f'@echo off\necho NetExec is not installed. Please see {info_file} for installation instructions.\necho You can install it with: pip install netexec')
         
-        batch_file_cme = self.wrappers_dir / "utilities" / "crackmapexec.bat"
-            with open(batch_file_cme, \'w\') as f:
+        batch_file_cme = self.base_dir / "crackmapexec.bat"
+        with open(batch_file_cme, 'w') as f:
             f.write(f'@echo off\necho NetExec is not installed. Please see {info_file} for installation instructions.\necho You can install it with: pip install netexec')
         
         Logger.warning("NetExec installation skipped - created placeholder and instructions instead")
@@ -767,8 +757,8 @@ Note: After installation, make sure 'netexec' is in your PATH or create a batch 
         if mimikatz_bin:
             # Create a symlink or batch file
             if self.is_windows:
-                batch_file = self.wrappers_dir / "mimikatz" / "mimikatz.bat"
-            with open(batch_file, \'w\') as f:
+                batch_file = self.base_dir / "mimikatz.bat"
+                with open(batch_file, 'w') as f:
                     f.write(f"@echo off\n{mimikatz_bin} %*")
                 Logger.success(f"Created batch file for Mimikatz: {batch_file}")
             else:
@@ -887,7 +877,7 @@ Place the downloaded SharpView.exe in this directory.
         
         if sharphound_exe:
             # Create a copy in the base directory for easy access
-            shutil.copy(sharphound_exe, self.bin_dir / "SharpHound.exe")
+            shutil.copy(sharphound_exe, self.base_dir / "SharpHound.exe")
             Logger.success(f"Copied SharpHound.exe to {self.base_dir / 'SharpHound.exe'}")
             
             Logger.success("SharpHound installed successfully")
@@ -912,8 +902,8 @@ Place the downloaded SharpView.exe in this directory.
             
             # Create a symlink or batch file
             if self.is_windows:
-                batch_file = self.wrappers_dir / "utilities" / "responder.bat"
-            with open(batch_file, \'w\') as f:
+                batch_file = self.base_dir / "responder.bat"
+                with open(batch_file, 'w') as f:
                     f.write(f"@echo off\n{self.python_command} {responder_py} %*")
                 Logger.success(f"Created batch file for Responder: {batch_file}")
             else:
@@ -959,8 +949,8 @@ Place the downloaded SharpView.exe in this directory.
         
         if bloodhound_exe:
             # Create a batch file
-            batch_file = self.wrappers_dir / "bloodhound" / "bloodhound.bat"
-            with open(batch_file, \'w\') as f:
+            batch_file = self.base_dir / "bloodhound.bat"
+            with open(batch_file, 'w') as f:
                 f.write(f"@echo off\nstart \"\" \"{bloodhound_exe}\"")
             Logger.success(f"Created batch file for BloodHound: {batch_file}")
             
@@ -986,8 +976,8 @@ Place the downloaded SharpView.exe in this directory.
             
             # Create a symlink or batch file
             if self.is_windows:
-                batch_file = self.wrappers_dir / "utilities" / "enum4linux.bat"
-            with open(batch_file, \'w\') as f:
+                batch_file = self.base_dir / "enum4linux.bat"
+                with open(batch_file, 'w') as f:
                     f.write(f"@echo off\nperl {enum4linux_pl} %*")
                 Logger.success(f"Created batch file for enum4linux: {batch_file}")
             else:
@@ -1020,8 +1010,8 @@ Place the downloaded SharpView.exe in this directory.
             
             # Create a symlink or batch file
             if self.is_windows:
-                batch_file = self.wrappers_dir / "utilities" / "ldapsearch-ad.bat"
-            with open(batch_file, \'w\') as f:
+                batch_file = self.base_dir / "ldapsearch-ad.bat"
+                with open(batch_file, 'w') as f:
                     f.write(f"@echo off\n{self.python_command} {ldapsearch_py} %*")
                 Logger.success(f"Created batch file for ldapsearch-ad: {batch_file}")
             else:
